@@ -1,0 +1,19 @@
+# Personal notes
+TODO-wf-market-tracker.md
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Secrets
+*.key
+*.pem
+
+# OS
+.DS_Store
+
+# Editors
+.idea/
+.vscode/
+*.swp
