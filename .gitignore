@@ -3,7 +3,6 @@ TODO-wf-market-tracker.md
 
 # Environment
 .env
-.env.*
 !.env.example
 
 # Secrets
