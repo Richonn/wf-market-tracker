@@ -26,12 +26,13 @@ jobs:
           rsync -az --delete \
             --exclude='.git' \
             --exclude='.env' \
-            -e "ssh -o StrictHostKeyChecking=no" \
+            -e "ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519" \
             ./ ${{ secrets.NAS_USER }}@${{ secrets.NAS_HOST }}:${{ secrets.NAS_DEPLOY_PATH }}/
 
       - name: Build and redeploy
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.NAS_USER }}@${{ secrets.NAS_HOST }} \
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 \
+            ${{ secrets.NAS_USER }}@${{ secrets.NAS_HOST }} \
             "cd ${{ secrets.NAS_DEPLOY_PATH }} && \
              docker compose build && \
              docker compose up -d --remove-orphans"
