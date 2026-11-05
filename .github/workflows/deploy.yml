@@ -23,8 +23,8 @@ jobs:
 
       - name: Copy files to NAS
         run: |
+          sudo chmod -R a+r .
           tar -czf - \
-            --ignore-failed-read \
             --exclude='.git' \
             --exclude='.env' \
             . | ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 \
