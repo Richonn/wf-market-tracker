@@ -30,6 +30,55 @@ func (d *DB) ItemSeeded(slug string) (bool, error) {
 	return count > 0, err
 }
 
+func (d *DB) AllSlugs() ([]string, error) {
+	rows, err := d.Query(`SELECT slug FROM items ORDER BY slug`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var slugs []string
+	for rows.Next() {
+		var s string
+		if err := rows.Scan(&s); err != nil {
+			return nil, err
+		}
+		slugs = append(slugs, s)
+	}
+	return slugs, rows.Err()
+}
+
+func (d *DB) MovingAvgSellMedian(slug string, windowDays int) (float64, error) {
+	var avg float64
+	err := d.QueryRow(`
+		SELECT COALESCE(AVG(sell_median), 0)
+		FROM price_snapshots
+		WHERE item_slug = $1
+		  AND sell_median > 0
+		  AND collected_at >= NOW() - ($2 || ' days')::INTERVAL
+	`, slug, windowDays).Scan(&avg)
+	return avg, err
+}
+
+func (d *DB) LatestSnapshot(slug string) (model.Snapshot, error) {
+	var s model.Snapshot
+	err := d.QueryRow(`
+		SELECT item_slug, collected_at, sell_min, sell_median, buy_max, active_sell_orders, active_buy_orders
+		FROM price_snapshots WHERE item_slug = $1
+		ORDER BY collected_at DESC LIMIT 1
+	`, slug).Scan(&s.ItemSlug, &s.CollectedAt, &s.SellMin, &s.SellMedian, &s.BuyMax, &s.ActiveSellOrders, &s.ActiveBuyOrders)
+	return s, err
+}
+
+func (d *DB) SnapshotAt(slug string, t time.Time) (model.Snapshot, error) {
+	var s model.Snapshot
+	err := d.QueryRow(`
+		SELECT item_slug, collected_at, sell_min, sell_median, buy_max, active_sell_orders, active_buy_orders
+		FROM price_snapshots WHERE item_slug = $1 AND collected_at <= $2
+		ORDER BY collected_at DESC LIMIT 1
+	`, slug, t).Scan(&s.ItemSlug, &s.CollectedAt, &s.SellMin, &s.SellMedian, &s.BuyMax, &s.ActiveSellOrders, &s.ActiveBuyOrders)
+	return s, err
+}
+
 func (d *DB) InsertHistoricalSnapshot(slug string, t time.Time, median, min, max float64, volume int) error {
 	_, err := d.Exec(`
 		INSERT INTO price_snapshots

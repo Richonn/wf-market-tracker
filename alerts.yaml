@@ -1,0 +1,5 @@
+trend_window_days: 30
+cooldown_minutes: 120
+sell_below_avg_pct: -20
+change_48h_pct: -15
+max_per_cycle: 10

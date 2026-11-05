@@ -1,0 +1,21 @@
+name: Deploy to NAS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: tailscale/github-action@v2
+        with:
+          hostname: github-actions
+          authkey: ${{ secrets.TS_AUTHKEY }}
+
+      - name: Deploy
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.NAS_USER }}@${{ secrets.NAS_HOST }} \
+            "cd ${{ secrets.NAS_DEPLOY_PATH }} && \
+             docker compose pull && \
+             docker compose up -d --remove-orphans"

@@ -54,6 +54,44 @@ at each bootstrap, filtered by `bulkTradable: true`.
 
 ---
 
+## Tailscale Funnel — public exposure
+
+**Decision: Tailscale Funnel on port 8080 (api container only).**
+
+Only the `api` container is on the `public` Docker network. Funnel terminates TLS and
+proxies to `localhost:8080`. No ports are exposed directly on the NAS.
+
+```sh
+# Enable (run once on the NAS)
+./scripts/funnel-enable.sh
+
+# Emergency stop
+./scripts/funnel-disable.sh
+# or: tailscale funnel off
+```
+
+The Funnel URL is shown by `tailscale funnel status` after enabling.
+
+---
+
+## Public interface — dedicated front vs exposing Grafana
+
+**Decision: dedicated read-only API + static front, Grafana stays private.**
+
+Exposing Grafana publicly would increase the attack surface (Grafana has had CVEs, requires
+keeping auth config tight, and leaks version info). A purpose-built API exposes exactly
+three endpoints, returns no stack traces, runs as non-root with `cap_drop: ALL` and
+`read_only: true`, and connects to the DB with a read-only user.
+
+The front is a single static HTML file — no build step, no framework, no dependencies
+beyond TradingView Lightweight Charts loaded from CDN.
+
+Tailscale Funnel exposes only the `api` container (port 8080) on the `public` Docker
+network. All other containers (db, collector, grafana, uptime-kuma, dozzle) are on the
+`internal` network only.
+
+---
+
 ## Collector language — Go vs Python
 
 **Decision: Go.**

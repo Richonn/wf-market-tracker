@@ -4,6 +4,12 @@ services:
     restart: unless-stopped
     environment:
       DATABASE_URL: postgres://wfmt:${POSTGRES_PASSWORD}@db:5432/wfmt?sslmode=disable
+      NTFY_URL: ${NTFY_URL:-}
+      NTFY_TOKEN: ${NTFY_TOKEN:-}
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
+      HEALTHCHECKS_URL: ${HEALTHCHECKS_URL:-}
+    volumes:
+      - ./alerts.yaml:/alerts.yaml:ro
     depends_on:
       db:
         condition: service_healthy
@@ -19,6 +25,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - db_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
     networks:
       - internal
     healthcheck:
@@ -34,14 +41,87 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
       GF_SERVER_ROOT_URL: http://localhost:3000
       GF_AUTH_ANONYMOUS_ENABLED: false
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
     networks:
       - internal
     depends_on:
       - db
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy:v0.5.0
+    restart: unless-stopped
+    environment:
+      CONTAINERS: 1
+      POST: 0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - socket-proxy
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:2.5.9
+    restart: unless-stopped
+    environment:
+      DOCKER_HOST: tcp://socket-proxy:2375
+    volumes:
+      - uptime_kuma_data:/app/data
+    networks:
+      - internal
+      - socket-proxy
+    depends_on:
+      - socket-proxy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3001 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  dozzle:
+    image: amir20/dozzle:v11.3.5
+    restart: unless-stopped
+    environment:
+      DOZZLE_NO_ANALYTICS: "true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/healthcheck || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://wfmt_ro:${WFMT_RO_PASSWORD}@db:5432/wfmt?sslmode=disable
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - internal
+      - public
+    cap_drop:
+      - ALL
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/health || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -59,7 +139,13 @@ services:
 networks:
   internal:
     driver: bridge
+  socket-proxy:
+    driver: bridge
+    internal: true
+  public:
+    driver: bridge
 
 volumes:
   db_data:
   grafana_data:
+  uptime_kuma_data:

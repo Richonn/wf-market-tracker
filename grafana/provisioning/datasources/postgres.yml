@@ -1,0 +1,17 @@
+apiVersion: 1
+
+datasources:
+  - name: wfmt
+    type: postgres
+    uid: wfmt-postgres
+    url: db:5432
+    database: wfmt
+    user: wfmt
+    secureJsonData:
+      password: ${POSTGRES_PASSWORD}
+    jsonData:
+      sslmode: disable
+      postgresVersion: 1700
+      timescaledb: false
+    isDefault: true
+    editable: false

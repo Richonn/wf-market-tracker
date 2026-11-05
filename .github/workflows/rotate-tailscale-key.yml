@@ -1,0 +1,37 @@
+name: Rotate Tailscale Auth Key
+
+on:
+  schedule:
+    - cron: "0 3 * * 1"  # every monday at 3am UTC
+  workflow_dispatch:
+
+jobs:
+  rotate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create new Tailscale auth key
+        id: create_key
+        run: |
+          RESPONSE=$(curl -sf -X POST "https://api.tailscale.com/api/v2/tailnet/-/keys" \
+            -H "Authorization: Bearer ${{ secrets.TS_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "capabilities": {
+                "devices": {
+                  "create": {
+                    "reusable": true,
+                    "ephemeral": true,
+                    "preauthorized": true
+                  }
+                }
+              },
+              "expirySeconds": 7776000
+            }')
+          echo "key=$(echo $RESPONSE | jq -r '.key')" >> $GITHUB_OUTPUT
+
+      - name: Update GitHub secret
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          echo "${{ steps.create_key.outputs.key }}" | \
+            gh secret set TS_AUTHKEY --repo ${{ github.repository }}

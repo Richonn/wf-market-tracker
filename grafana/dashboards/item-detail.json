@@ -1,0 +1,109 @@
+{
+  "__inputs": [],
+  "__requires": [],
+  "annotations": { "list": [] },
+  "editable": false,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "postgres", "uid": "wfmt-postgres" },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0 },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "sell_min" },
+            "properties": [{ "id": "displayName", "value": "Sell min" }, { "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "sell_median" },
+            "properties": [{ "id": "displayName", "value": "Sell median" }, { "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "buy_max" },
+            "properties": [{ "id": "displayName", "value": "Buy max" }, { "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
+          }
+        ]
+      },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "legend": { "calcs": ["last", "min", "max"], "displayMode": "table", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "wfmt-postgres" },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  collected_at AS time,\n  sell_min,\n  sell_median,\n  buy_max\nFROM price_snapshots\nWHERE item_slug = '$item'\n  AND $__timeFilter(collected_at)\nORDER BY collected_at",
+          "refId": "A"
+        }
+      ],
+      "title": "Price history",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "postgres", "uid": "wfmt-postgres" },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0 },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "active_sell_orders" },
+            "properties": [{ "id": "displayName", "value": "Sell orders" }, { "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "active_buy_orders" },
+            "properties": [{ "id": "displayName", "value": "Buy orders" }, { "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
+          }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 10 },
+      "id": 2,
+      "options": {
+        "legend": { "calcs": ["mean", "last"], "displayMode": "table", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "wfmt-postgres" },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  collected_at AS time,\n  active_sell_orders,\n  active_buy_orders\nFROM price_snapshots\nWHERE item_slug = '$item'\n  AND $__timeFilter(collected_at)\nORDER BY collected_at",
+          "refId": "A"
+        }
+      ],
+      "title": "Liquidity",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "5m",
+  "schemaVersion": 39,
+  "tags": ["wfmt"],
+  "templating": {
+    "list": [
+      {
+        "datasource": { "type": "postgres", "uid": "wfmt-postgres" },
+        "definition": "SELECT slug || ' — ' || name AS text, slug AS value FROM items ORDER BY name",
+        "hide": 0,
+        "includeAll": false,
+        "name": "item",
+        "options": [],
+        "query": "SELECT slug || ' — ' || name AS text, slug AS value FROM items ORDER BY name",
+        "refresh": 2,
+        "sort": 1,
+        "type": "query",
+        "label": "Item"
+      }
+    ]
+  },
+  "time": { "from": "now-7d", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Item detail",
+  "uid": "wfmt-item-detail",
+  "version": 1
+}

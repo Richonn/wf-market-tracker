@@ -2,22 +2,26 @@ package collector
 
 import (
 	"log/slog"
+	"net/http"
+	"os"
 	"sort"
 	"time"
 
+	"github.com/Richonn/wf-market-tracker/internal/alert"
 	"github.com/Richonn/wf-market-tracker/internal/api"
 	"github.com/Richonn/wf-market-tracker/internal/db"
 	"github.com/Richonn/wf-market-tracker/internal/model"
 )
 
 type Collector struct {
-	api         *api.Client
-	db          *db.DB
+	api           *api.Client
+	db            *db.DB
+	alerts        *alert.Engine
 	lastRetention time.Time
 }
 
-func New(api *api.Client, db *db.DB) *Collector {
-	return &Collector{api: api, db: db}
+func New(api *api.Client, db *db.DB, alerts *alert.Engine) *Collector {
+	return &Collector{api: api, db: db, alerts: alerts}
 }
 
 func (c *Collector) Bootstrap() error {
@@ -67,6 +71,11 @@ func (c *Collector) Run(interval time.Duration) {
 			slog.Error("collection cycle failed", "err", err)
 		} else {
 			slog.Info("collection cycle done", "duration", time.Since(start).Round(time.Second))
+			c.pingHealthcheck()
+		}
+
+		if c.alerts != nil {
+			c.alerts.Evaluate()
 		}
 
 		if time.Since(c.lastRetention) >= 24*time.Hour {
@@ -105,6 +114,19 @@ func (c *Collector) collect() error {
 		}
 	}
 	return nil
+}
+
+func (c *Collector) pingHealthcheck() {
+	url := os.Getenv("HEALTHCHECKS_URL")
+	if url == "" {
+		return
+	}
+	resp, err := http.Get(url)
+	if err != nil {
+		slog.Warn("healthcheck ping failed", "err", err)
+		return
+	}
+	resp.Body.Close()
 }
 
 func ComputeSnapshot(slug string, orders []model.Order) model.Snapshot {

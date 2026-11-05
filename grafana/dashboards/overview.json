@@ -1,0 +1,118 @@
+{
+  "__inputs": [],
+  "__requires": [],
+  "annotations": { "list": [] },
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "postgres", "uid": "wfmt-postgres" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "sell_median" },
+            "properties": [
+              { "id": "displayName", "value": "Price (median)" },
+              { "id": "unit", "value": "short" },
+              { "id": "decimals", "value": 0 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "change_24h_pct" },
+            "properties": [
+              { "id": "displayName", "value": "24h %" },
+              { "id": "unit", "value": "percent" },
+              { "id": "decimals", "value": 1 },
+              {
+                "id": "custom.cellOptions",
+                "value": { "type": "color-text" }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "red", "value": null },
+                    { "color": "green", "value": 0 }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "change_7d_pct" },
+            "properties": [
+              { "id": "displayName", "value": "7d %" },
+              { "id": "unit", "value": "percent" },
+              { "id": "decimals", "value": 1 },
+              {
+                "id": "custom.cellOptions",
+                "value": { "type": "color-text" }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "red", "value": null },
+                    { "color": "green", "value": 0 }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "active_sell_orders" },
+            "properties": [
+              { "id": "displayName", "value": "Sell orders" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "active_buy_orders" },
+            "properties": [
+              { "id": "displayName", "value": "Buy orders" }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 24, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "show": false },
+        "showHeader": true,
+        "sortBy": [{ "desc": true, "displayName": "24h %" }]
+      },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "wfmt-postgres" },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  i.name,\n  latest.sell_median,\n  latest.active_sell_orders,\n  latest.active_buy_orders,\n  ROUND(\n    (latest.sell_median - prev24h.sell_median)::numeric\n    / NULLIF(prev24h.sell_median, 0) * 100, 1\n  ) AS change_24h_pct,\n  ROUND(\n    (latest.sell_median - prev7d.sell_median)::numeric\n    / NULLIF(prev7d.sell_median, 0) * 100, 1\n  ) AS change_7d_pct\nFROM items i\nJOIN LATERAL (\n  SELECT sell_median, active_sell_orders, active_buy_orders\n  FROM price_snapshots\n  WHERE item_slug = i.slug\n  ORDER BY collected_at DESC\n  LIMIT 1\n) latest ON true\nLEFT JOIN LATERAL (\n  SELECT sell_median\n  FROM price_snapshots\n  WHERE item_slug = i.slug\n    AND collected_at <= NOW() - INTERVAL '24 hours'\n  ORDER BY collected_at DESC\n  LIMIT 1\n) prev24h ON true\nLEFT JOIN LATERAL (\n  SELECT sell_median\n  FROM price_snapshots\n  WHERE item_slug = i.slug\n    AND collected_at <= NOW() - INTERVAL '7 days'\n  ORDER BY collected_at DESC\n  LIMIT 1\n) prev7d ON true\nORDER BY change_24h_pct DESC NULLS LAST",
+          "refId": "A"
+        }
+      ],
+      "title": "All items — current price & variations",
+      "type": "table"
+    }
+  ],
+  "refresh": "5m",
+  "schemaVersion": 39,
+  "tags": ["wfmt"],
+  "time": { "from": "now-24h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Overview",
+  "uid": "wfmt-overview",
+  "version": 1
+}
