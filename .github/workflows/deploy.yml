@@ -8,14 +8,30 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - uses: tailscale/github-action@v2
         with:
           hostname: github-actions
           authkey: ${{ secrets.TS_AUTHKEY }}
 
-      - name: Deploy
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.NAS_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+      - name: Copy files to NAS
+        run: |
+          rsync -az --delete \
+            --exclude='.git' \
+            --exclude='.env' \
+            -e "ssh -o StrictHostKeyChecking=no" \
+            ./ ${{ secrets.NAS_USER }}@${{ secrets.NAS_HOST }}:${{ secrets.NAS_DEPLOY_PATH }}/
+
+      - name: Build and redeploy
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.NAS_USER }}@${{ secrets.NAS_HOST }} \
             "cd ${{ secrets.NAS_DEPLOY_PATH }} && \
-             docker compose pull && \
+             docker compose build && \
              docker compose up -d --remove-orphans"

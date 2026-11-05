@@ -42,6 +42,8 @@ services:
       GF_SERVER_ROOT_URL: http://localhost:3000
       GF_AUTH_ANONYMOUS_ENABLED: false
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "127.0.0.1:3000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
@@ -72,6 +74,8 @@ services:
     restart: unless-stopped
     environment:
       DOCKER_HOST: tcp://socket-proxy:2375
+    ports:
+      - "127.0.0.1:3001:3001"
     volumes:
       - uptime_kuma_data:/app/data
     networks:
@@ -90,6 +94,8 @@ services:
     restart: unless-stopped
     environment:
       DOZZLE_NO_ANALYTICS: "true"
+    ports:
+      - "127.0.0.1:8081:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:

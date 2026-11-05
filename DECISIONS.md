@@ -72,6 +72,11 @@ proxies to `localhost:8080`. No ports are exposed directly on the NAS.
 
 The Funnel URL is shown by `tailscale funnel status` after enabling.
 
+Public URL: https://ugreen-nas.tailac801e.ts.net
+
+The API container must bind port 8080 to the host loopback (`127.0.0.1:8080:8080`) so
+Tailscale Funnel can reach it via `proxy http://127.0.0.1:8080`.
+
 ---
 
 ## Public interface — dedicated front vs exposing Grafana
