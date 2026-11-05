@@ -23,11 +23,12 @@ jobs:
 
       - name: Copy files to NAS
         run: |
-          rsync -az --delete \
+          tar -czf - \
             --exclude='.git' \
             --exclude='.env' \
-            -e "ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519" \
-            ./ ${{ secrets.NAS_USER }}@${{ secrets.NAS_HOST }}:${{ secrets.NAS_DEPLOY_PATH }}/
+            . | ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 \
+            ${{ secrets.NAS_USER }}@${{ secrets.NAS_HOST }} \
+            "cd ${{ secrets.NAS_DEPLOY_PATH }} && tar -xzf -"
 
       - name: Build and redeploy
         run: |
