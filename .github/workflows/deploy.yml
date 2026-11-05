@@ -23,6 +23,7 @@ jobs:
 
       - name: Copy files to NAS
         run: |
+          chmod -R u+r .
           tar -czf - \
             --exclude='.git' \
             --exclude='.env' \
