@@ -17,6 +17,9 @@ jobs:
   test:
     uses: ./.github/workflows/test.yml
   security:
+    permissions:
+      actions: read
+      security-events: write
     uses: ./.github/workflows/security.yml
 
   docker:
