@@ -25,6 +25,11 @@ jobs:
 
   docker:
     needs: [lint, test, security]
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+      id-token: write
     uses: ./.github/workflows/docker.yml
 
   provenance:
