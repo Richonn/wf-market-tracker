@@ -12,7 +12,12 @@ type itemsResponse struct {
 }
 
 type ordersResponse struct {
-	Data []model.Order `json:"data"`
+	Data json.RawMessage `json:"data"`
+}
+
+type ordersData struct {
+	Buy  []model.Order `json:"buy"`
+	Sell []model.Order `json:"sell"`
 }
 
 func (c *Client) GetItems() ([]model.Item, error) {
@@ -38,5 +43,17 @@ func (c *Client) GetTopOrders(slug string) ([]model.Order, error) {
 	if err := json.Unmarshal(body, &resp); err != nil {
 		return nil, err
 	}
-	return resp.Data, nil
+
+	// Try array format first
+	var orders []model.Order
+	if err := json.Unmarshal(resp.Data, &orders); err == nil {
+		return orders, nil
+	}
+
+	// Fall back to object format {buy: [...], sell: [...]}
+	var data ordersData
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		return nil, fmt.Errorf("unexpected orders format: %w", err)
+	}
+	return append(data.Buy, data.Sell...), nil
 }
