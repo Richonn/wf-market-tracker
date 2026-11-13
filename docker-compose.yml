@@ -23,6 +23,7 @@ services:
       POSTGRES_DB: wfmt
       POSTGRES_USER: wfmt
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      WFMT_RO_PASSWORD: ${WFMT_RO_PASSWORD}
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./postgres/init:/docker-entrypoint-initdb.d:ro

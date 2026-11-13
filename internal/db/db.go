@@ -17,6 +17,14 @@ type DB struct {
 }
 
 func New(dsn string) (*DB, error) {
+	return newConn(dsn, true)
+}
+
+func NewReadOnly(dsn string) (*DB, error) {
+	return newConn(dsn, false)
+}
+
+func newConn(dsn string, migrate bool) (*DB, error) {
 	conn, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("open: %w", err)
@@ -27,8 +35,10 @@ func New(dsn string) (*DB, error) {
 	conn.SetMaxOpenConns(5)
 	conn.SetMaxIdleConns(2)
 
-	if err := runMigrations(conn); err != nil {
-		return nil, fmt.Errorf("migrate: %w", err)
+	if migrate {
+		if err := runMigrations(conn); err != nil {
+			return nil, fmt.Errorf("migrate: %w", err)
+		}
 	}
 
 	return &DB{conn}, nil

@@ -15,16 +15,18 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
 
+      - name: Set image name
+        id: meta
+        run: echo "image=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]'):${{ github.sha }}" >> $GITHUB_OUTPUT
+
       - name: Build image
         uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
         with:
           context: .
           push: false
-          outputs: type=docker,dest=/tmp/image.tar
-
-      - name: Load image
-        run: docker load --input /tmp/image.tar
+          load: true
+          tags: ${{ steps.meta.outputs.image }}
 
       - uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
-          image: ${{ github.repository }}:${{ github.sha }}
+          image: ${{ steps.meta.outputs.image }}

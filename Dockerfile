@@ -6,7 +6,7 @@ COPY go.mod go.sum ./
 RUN go mod download && go mod verify
 
 COPY . .
-RUN go mod tidy && CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o collector ./cmd/collector
+RUN GOTOOLCHAIN=local go mod tidy && CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o collector ./cmd/collector
 
 
 FROM gcr.io/distroless/static-debian12:nonroot

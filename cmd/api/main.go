@@ -15,7 +15,7 @@ import (
 func main() {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
 
-	database, err := db.New(mustEnv("DATABASE_URL"))
+	database, err := db.NewReadOnly(mustEnv("DATABASE_URL"))
 	if err != nil {
 		slog.Error("db connect", "err", err)
 		os.Exit(1)
@@ -100,7 +100,7 @@ func securityHeaders(next http.Handler) http.Handler {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "DENY")
 		w.Header().Set("Referrer-Policy", "no-referrer")
-		w.Header().Set("Content-Security-Policy", "default-src 'none'")
+		w.Header().Set("Content-Security-Policy", "default-src 'none'; script-src 'unsafe-inline' https://unpkg.com; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self'")
 		w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 		next.ServeHTTP(w, r)
 	})
