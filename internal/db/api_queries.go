@@ -3,11 +3,11 @@ package db
 import "time"
 
 type ItemRow struct {
-	Slug        string  `json:"slug"`
-	Name        string  `json:"name"`
-	SellMedian  int     `json:"sell_median"`
-	Change24hPct float64 `json:"change_24h_pct"`
-	Change7dPct  float64 `json:"change_7d_pct"`
+	Slug         string   `json:"slug"`
+	Name         string   `json:"name"`
+	SellMedian   int      `json:"sell_median"`
+	Change24hPct *float64 `json:"change_24h_pct"`
+	Change7dPct  *float64 `json:"change_7d_pct"`
 }
 
 type Candle struct {

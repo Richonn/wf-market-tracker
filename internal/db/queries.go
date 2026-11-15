@@ -11,7 +11,7 @@ func (d *DB) UpsertItem(item model.Item) error {
 		INSERT INTO items (id, slug, name, tags)
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, tags = EXCLUDED.tags
-	`, item.ID, item.Slug, item.Name, item.Tags)
+	`, item.ID, item.Slug, item.Name(), item.Tags)
 	return err
 }
 

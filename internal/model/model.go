@@ -2,12 +2,22 @@ package model
 
 import "time"
 
+type ItemI18n struct {
+	En struct {
+		Name string `json:"name"`
+	} `json:"en"`
+}
+
 type Item struct {
-	ID           string   `json:"id"`
-	Slug         string   `json:"slug"`
-	Name         string   `json:"name"`
-	BulkTradable bool     `json:"bulkTradable"`
-	Tags         []string `json:"tags"`
+	ID           string    `json:"id"`
+	Slug         string    `json:"slug"`
+	I18n         ItemI18n  `json:"i18n"`
+	BulkTradable bool      `json:"bulkTradable"`
+	Tags         []string  `json:"tags"`
+}
+
+func (i Item) Name() string {
+	return i.I18n.En.Name
 }
 
 type OrderUser struct {

@@ -31,9 +31,6 @@ func (c *Collector) Bootstrap() error {
 	}
 
 	for _, item := range items {
-		if !item.BulkTradable {
-			continue
-		}
 		if err := c.db.UpsertItem(item); err != nil {
 			slog.Error("upsert item", "slug", item.Slug, "err", err)
 			continue
@@ -98,10 +95,6 @@ func (c *Collector) collect() error {
 	}
 
 	for _, item := range items {
-		if !item.BulkTradable {
-			continue
-		}
-
 		orders, err := c.api.GetTopOrders(item.Slug)
 		if err != nil {
 			slog.Warn("get orders", "slug", item.Slug, "err", err)
