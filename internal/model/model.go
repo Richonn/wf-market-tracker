@@ -10,14 +10,16 @@ type Item struct {
 	Tags         []string `json:"tags"`
 }
 
+type OrderUser struct {
+	Status string `json:"status"`
+}
+
 type Order struct {
-	ID         string `json:"id"`
-	ItemSlug   string `json:"itemSlug"`
-	OrderType  string `json:"orderType"`
-	Platinum   int    `json:"platinum"`
-	Quantity   int    `json:"quantity"`
-	UserName   string `json:"userName"`
-	UserStatus string `json:"userStatus"`
+	ID        string     `json:"id"`
+	Type      string     `json:"type"`
+	Platinum  int        `json:"platinum"`
+	Quantity  int        `json:"quantity"`
+	User      OrderUser  `json:"user"`
 }
 
 type Snapshot struct {

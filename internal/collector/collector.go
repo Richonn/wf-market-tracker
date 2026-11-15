@@ -133,10 +133,10 @@ func ComputeSnapshot(slug string, orders []model.Order) model.Snapshot {
 	var sells, buys []int
 
 	for _, o := range orders {
-		if o.UserStatus == "offline" {
+		if o.User.Status == "offline" {
 			continue
 		}
-		switch o.OrderType {
+		switch o.Type {
 		case "sell":
 			sells = append(sells, o.Platinum)
 		case "buy":

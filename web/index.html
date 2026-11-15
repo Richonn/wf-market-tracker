@@ -7,32 +7,32 @@
   <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, sans-serif; background: #0f0f0f; color: #e0e0e0; }
-    header { padding: 1rem 2rem; border-bottom: 1px solid #222; display: flex; align-items: center; gap: 1rem; }
-    header h1 { font-size: 1.1rem; font-weight: 600; }
-    header small { color: #666; font-size: 0.75rem; }
+    body { font-family: system-ui, sans-serif; background: #1a1512; color: #e8e0d5; }
+    header { padding: 1rem 2rem; border-bottom: 1px solid #2e2820; display: flex; align-items: center; gap: 1rem; background: #211c17; }
+    header h1 { font-size: 1.1rem; font-weight: 600; color: #f0e6d3; }
+    header small { color: #7a6e63; font-size: 0.75rem; }
     nav { display: flex; gap: 1rem; margin-left: auto; }
-    nav a { color: #aaa; text-decoration: none; font-size: 0.9rem; }
-    nav a.active, nav a:hover { color: #fff; }
+    nav a { color: #9a8e83; text-decoration: none; font-size: 0.9rem; }
+    nav a.active, nav a:hover { color: #f0e6d3; }
     main { padding: 1.5rem 2rem; }
     table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-    th { text-align: left; padding: 0.5rem 0.75rem; color: #666; font-weight: 500; border-bottom: 1px solid #222; }
-    td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #1a1a1a; }
-    tr:hover td { background: #161616; }
-    td a { color: #e0e0e0; text-decoration: none; }
-    td a:hover { color: #fff; }
-    .up { color: #26a69a; }
-    .down { color: #ef5350; }
-    .search { padding: 0.5rem 0.75rem; background: #1a1a1a; border: 1px solid #333; color: #e0e0e0; border-radius: 4px; width: 220px; font-size: 0.875rem; }
-    .search:focus { outline: none; border-color: #555; }
+    th { text-align: left; padding: 0.5rem 0.75rem; color: #7a6e63; font-weight: 500; border-bottom: 1px solid #2e2820; }
+    td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #221e1a; }
+    tr:hover td { background: #1f1a15; }
+    td a { color: #e8e0d5; text-decoration: none; }
+    td a:hover { color: #f0e6d3; }
+    .up { color: #4caf7d; }
+    .down { color: #e06c5a; }
+    .search { padding: 0.5rem 0.75rem; background: #221e1a; border: 1px solid #3a3028; color: #e8e0d5; border-radius: 4px; width: 220px; font-size: 0.875rem; }
+    .search:focus { outline: none; border-color: #5a4e43; }
     #chart-view { display: none; }
     #chart-view.active { display: block; }
     #list-view.hidden { display: none; }
     #chart-container { height: 400px; margin-top: 1rem; }
-    .back { background: none; border: 1px solid #333; color: #aaa; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.875rem; }
-    .back:hover { color: #fff; border-color: #555; }
-    h2 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; }
-    .disclaimer { color: #444; font-size: 0.75rem; margin-top: 2rem; }
+    .back { background: none; border: 1px solid #3a3028; color: #9a8e83; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.875rem; }
+    .back:hover { color: #f0e6d3; border-color: #5a4e43; }
+    h2 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: #f0e6d3; }
+    .disclaimer { color: #5a4e43; font-size: 0.75rem; margin-top: 2rem; }
   </style>
 </head>
 <body>
@@ -111,8 +111,8 @@
       container.innerHTML = '';
 
       const chart = LightweightCharts.createChart(container, {
-        layout: { background: { color: '#0f0f0f' }, textColor: '#aaa' },
-        grid: { vertLines: { color: '#1a1a1a' }, horzLines: { color: '#1a1a1a' } },
+        layout: { background: { color: '#1a1512' }, textColor: '#9a8e83' },
+        grid: { vertLines: { color: '#2e2820' }, horzLines: { color: '#2e2820' } },
         width: container.clientWidth,
         height: 400,
       });
