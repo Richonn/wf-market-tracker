@@ -33,12 +33,12 @@ func (c *Client) get(url string) ([]byte, error) {
 	var body []byte
 	var err error
 
-	for attempt := range 5 {
+	for attempt := range 3 {
 		body, err = c.do(url)
 		if err == nil {
 			return body, nil
 		}
-		if attempt < 4 {
+		if attempt < 2 {
 			time.Sleep(time.Duration(math.Pow(2, float64(attempt))) * time.Second)
 		}
 	}
