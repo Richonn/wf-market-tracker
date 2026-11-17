@@ -33,8 +33,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-      security-events: write
-      id-token: write
     uses: ./.github/workflows/docker.yml
 
   provenance:
@@ -48,6 +46,7 @@ jobs:
     with:
       image: ${{ needs.docker.outputs.image }}
       digest: ${{ needs.docker.outputs.digest }}
+      private-repository: true
     secrets:
       registry-username: ${{ github.actor }}
       registry-password: ${{ secrets.GITHUB_TOKEN }}
