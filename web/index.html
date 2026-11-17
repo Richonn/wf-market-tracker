@@ -64,8 +64,11 @@
       </table>
     </div>
     <div id="chart-view">
-      <button class="back" onclick="showList()">← Back</button>
-      <h2 id="chart-title" style="margin-top:1rem"></h2>
+      <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem">
+        <button class="back" onclick="showList()">← Back</button>
+        <a id="market-link" href="#" target="_blank" rel="noopener" style="font-size:0.85rem; color:#9a8e83; text-decoration:none; border:1px solid #3a3028; padding:0.4rem 0.8rem; border-radius:4px;">Buy on market ↗</a>
+      </div>
+      <h2 id="chart-title"></h2>
       <div class="range-bar">
         <button class="range-btn active" onclick="setRange('1D', this)">1D</button>
         <button class="range-btn" onclick="setRange('5D', this)">5D</button>
@@ -142,6 +145,7 @@
       document.getElementById('list-view').classList.add('hidden');
       document.getElementById('chart-view').classList.add('active');
       document.getElementById('chart-title').textContent = name;
+      document.getElementById('market-link').href = `https://warframe.market/items/${slug}?type=sell`;
       await renderChart(slug);
     }
 
