@@ -168,7 +168,7 @@ func cached(ttl time.Duration, h http.HandlerFunc) http.HandlerFunc {
 			body := entry.body
 			mu.Unlock()
 			w.Header().Set("Content-Type", "application/json")
-			w.Write(body)
+			_, _ = w.Write(body)
 			return
 		}
 		mu.Unlock()
@@ -184,7 +184,7 @@ func cached(ttl time.Duration, h http.HandlerFunc) http.HandlerFunc {
 			w.Header()[k] = v
 		}
 		w.WriteHeader(rec.code)
-		w.Write(rec.body)
+		_, _ = w.Write(rec.body)
 	}
 }
 
