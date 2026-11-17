@@ -201,7 +201,7 @@
       document.getElementById('chart-view').classList.add('active');
       document.getElementById('chart-title').textContent = name;
       document.getElementById('market-link').href = `https://warframe.market/items/${slug}?type=sell`;
-      document.getElementById('wiki-link').href = `https://warframe.wiki.gg/wiki/${slugToWikiTitle(slug)}`;
+      document.getElementById('wiki-link').href = `https://wiki.warframe.com/w/${slugToWikiTitle(slug)}`;
       await renderChart(slug);
     }
 

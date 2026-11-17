@@ -37,7 +37,7 @@ required in the collector.
 
 ```
 cmd/collector/main.go                — entrypoint, reads DATABASE_URL, runs bootstrap then loop
-internal/api/client.go               — HTTP client, 400ms/req throttle, exponential backoff (x5)
+internal/api/client.go               — HTTP client, 400ms/req throttle, exponential backoff (x3)
 internal/api/v2.go                   — GetItems(), GetTopOrders()
 internal/api/v1.go                   — GetStatistics() for historical seed
 internal/collector/collector.go      — Bootstrap() + Run() + computeSnapshot()
@@ -49,8 +49,8 @@ internal/model/model.go              — Item, Order, Snapshot types
 migrations/001_init.sql              — items + price_snapshots tables
 ```
 
-No `watchlist.yaml` — tradeable item catalog is loaded dynamically from `GET /v2/items`
-at each bootstrap, filtered by `bulkTradable: true`.
+No `watchlist.yaml` — tradeable item catalog is loaded dynamically from `GET /v2/items`.
+All items returned by the API are tracked (no `bulkTradable` filter — field removed in v2).
 
 ---
 
@@ -125,9 +125,8 @@ handles this easily with no extra complexity.
 
 **Decision: every 45 minutes.**
 
-We track all tradeable items (filtered by `bulkTradable: true` from `GET /items`), which
-amounts to roughly 1,500-2,000 items. At 3 req/sec that's ~11 minutes of requests per
-cycle, leaving plenty of idle time before the next run.
+We track all items returned by `GET /v2/items`, which amounts to ~1,000 items. At one request
+per 400ms that's ~7 minutes per cycle, leaving plenty of idle time before the next run.
 
 A 15-min window would be too tight. 45 min is comfortable and still gives 32 data points
 per day per item — enough for meaningful charts and trend detection.
