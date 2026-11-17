@@ -101,9 +101,10 @@ func (c *Collector) collect() error {
 			continue
 		}
 
-		snapshot := ComputeSnapshot(item.Slug, orders)
-		if err := c.db.InsertSnapshot(snapshot); err != nil {
-			slog.Error("insert snapshot", "slug", item.Slug, "err", err)
+		for _, snapshot := range ComputeSnapshots(item.Slug, orders) {
+			if err := c.db.InsertSnapshot(snapshot); err != nil {
+				slog.Error("insert snapshot", "slug", item.Slug, "rank", snapshot.Rank, "err", err)
+			}
 		}
 	}
 	return nil
@@ -122,36 +123,59 @@ func (c *Collector) pingHealthcheck() {
 	resp.Body.Close()
 }
 
-func ComputeSnapshot(slug string, orders []model.Order) model.Snapshot {
-	var sells, buys []int
+func ComputeSnapshots(slug string, orders []model.Order) []model.Snapshot {
+	type rankOrders struct {
+		sells []int
+		buys  []int
+	}
+	byRank := map[int]*rankOrders{}
 
 	for _, o := range orders {
 		if o.User.Status == "offline" {
 			continue
 		}
+		if _, ok := byRank[o.Rank]; !ok {
+			byRank[o.Rank] = &rankOrders{}
+		}
 		switch o.Type {
 		case "sell":
-			sells = append(sells, o.Platinum)
+			byRank[o.Rank].sells = append(byRank[o.Rank].sells, o.Platinum)
 		case "buy":
-			buys = append(buys, o.Platinum)
+			byRank[o.Rank].buys = append(byRank[o.Rank].buys, o.Platinum)
 		}
 	}
 
-	sort.Ints(sells)
-	sort.Sort(sort.Reverse(sort.IntSlice(buys)))
+	now := time.Now().UTC()
+	var snapshots []model.Snapshot
+	for rank, ro := range byRank {
+		sort.Ints(ro.sells)
+		sort.Sort(sort.Reverse(sort.IntSlice(ro.buys)))
 
-	s := model.Snapshot{
-		ItemSlug:         slug,
-		CollectedAt:      time.Now().UTC(),
-		ActiveSellOrders: len(sells),
-		ActiveBuyOrders:  len(buys),
+		s := model.Snapshot{
+			ItemSlug:         slug,
+			CollectedAt:      now,
+			Rank:             rank,
+			ActiveSellOrders: len(ro.sells),
+			ActiveBuyOrders:  len(ro.buys),
+		}
+		if len(ro.sells) > 0 {
+			s.SellMin = ro.sells[0]
+			s.SellMedian = ro.sells[len(ro.sells)/2]
+		}
+		if len(ro.buys) > 0 {
+			s.BuyMax = ro.buys[0]
+		}
+		snapshots = append(snapshots, s)
 	}
-	if len(sells) > 0 {
-		s.SellMin = sells[0]
-		s.SellMedian = sells[len(sells)/2]
+	return snapshots
+}
+
+func ComputeSnapshot(slug string, orders []model.Order) model.Snapshot {
+	snaps := ComputeSnapshots(slug, orders)
+	for _, s := range snaps {
+		if s.Rank == 0 {
+			return s
+		}
 	}
-	if len(buys) > 0 {
-		s.BuyMax = buys[0]
-	}
-	return s
+	return model.Snapshot{ItemSlug: slug, CollectedAt: time.Now().UTC()}
 }

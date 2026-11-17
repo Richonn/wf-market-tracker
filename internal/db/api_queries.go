@@ -66,24 +66,22 @@ func (d *DB) ListItems() ([]ItemRow, error) {
 	return items, rows.Err()
 }
 
-func (d *DB) ItemCandles(slug, interval string) ([]Candle, error) {
+func (d *DB) ItemCandles(slug, interval string, rank int) ([]Candle, error) {
 	var query string
 	switch interval {
 	case "1d":
-		query = `
-			SELECT day::timestamptz, sell_min, sell_median, buy_max, sample_count
+		query = `SELECT day::timestamptz, sell_min, sell_median, buy_max, sample_count
 			FROM price_snapshots_daily
-			WHERE item_slug = $1
+			WHERE item_slug = $1 AND rank = $2
 			ORDER BY day DESC LIMIT 365`
 	default:
-		query = `
-			SELECT hour, sell_min, sell_median, buy_max, sample_count
+		query = `SELECT hour, sell_min, sell_median, buy_max, sample_count
 			FROM price_snapshots_hourly
-			WHERE item_slug = $1
+			WHERE item_slug = $1 AND rank = $2
 			ORDER BY hour DESC LIMIT 720`
 	}
 
-	rows, err := d.Query(query, slug)
+	rows, err := d.Query(query, slug, rank)
 	if err != nil {
 		return nil, err
 	}
@@ -98,6 +96,28 @@ func (d *DB) ItemCandles(slug, interval string) ([]Candle, error) {
 		candles = append(candles, c)
 	}
 	return candles, rows.Err()
+}
+
+func (d *DB) ItemRanks(slug string) ([]int, error) {
+	rows, err := d.Query(`
+		SELECT DISTINCT rank FROM price_snapshots
+		WHERE item_slug = $1
+		ORDER BY rank
+	`, slug)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ranks []int
+	for rows.Next() {
+		var r int
+		if err := rows.Scan(&r); err != nil {
+			return nil, err
+		}
+		ranks = append(ranks, r)
+	}
+	return ranks, rows.Err()
 }
 
 func (d *DB) Movers() ([]ItemRow, error) {

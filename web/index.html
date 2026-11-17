@@ -116,6 +116,9 @@
         <button class="range-btn" onclick="setRange('6M', this)">6M</button>
         <button class="range-btn" onclick="setRange('ALL', this)">All</button>
       </div>
+      <div id="rank-bar" style="display:none; margin-top:0.5rem; display:flex; gap:0.25rem; flex-wrap:wrap; align-items:center;">
+        <span style="font-size:0.8rem; color:var(--muted); margin-right:0.25rem;">Rank</span>
+      </div>
       <div id="chart-container"></div>
       <div id="volume-container"></div>
     </div>
@@ -127,6 +130,7 @@
     let currentSlug = null;
     let candleCache = {};
     let currentRange = '1D';
+    let currentRank = 0;
     let isDark = true;
 
     function toggleTheme() {
@@ -183,31 +187,47 @@
       'ALL': { interval: '1d', points: Infinity },
     };
 
-    async function fetchCandles(slug, interval) {
+    async function fetchCandles(slug, interval, rank) {
       if (!candleCache[slug]) candleCache[slug] = {};
-      if (!candleCache[slug][interval]) {
-        const res = await fetch(`/items/${slug}/candles?interval=${interval}`);
+      const key = `${interval}_${rank}`;
+      if (!candleCache[slug][key]) {
+        const res = await fetch(`/items/${slug}/candles?interval=${interval}&rank=${rank}`);
         const data = await res.json();
-        candleCache[slug][interval] = (data || []).slice().reverse();
+        candleCache[slug][key] = (data || []).slice().reverse();
       }
-      return candleCache[slug][interval];
+      return candleCache[slug][key];
+    }
+
+    async function loadRanks(slug) {
+      const res = await fetch(`/items/${slug}/ranks`);
+      const ranks = await res.json();
+      const bar = document.getElementById('rank-bar');
+      if (!ranks || ranks.length <= 1) {
+        bar.style.display = 'none';
+        return;
+      }
+      bar.style.display = 'flex';
+      const btns = ranks.map((r, i) => `<button class="range-btn${i === 0 ? ' active' : ''}" onclick="setRank(${r}, this)">R${r}</button>`).join('');
+      bar.innerHTML = `<span style="font-size:0.8rem; color:var(--muted); margin-right:0.25rem;">Rank</span>${btns}`;
     }
 
     async function showChart(slug, name) {
       currentSlug = slug;
       currentRange = '1D';
+      currentRank = 0;
       document.querySelectorAll('.range-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
       document.getElementById('list-view').classList.add('hidden');
       document.getElementById('chart-view').classList.add('active');
       document.getElementById('chart-title').textContent = name;
       document.getElementById('market-link').href = `https://warframe.market/items/${slug}?type=sell`;
       document.getElementById('wiki-link').href = `https://wiki.warframe.com/w/${slugToWikiTitle(slug)}`;
+      await loadRanks(slug);
       await renderChart(slug);
     }
 
     async function renderChart(slug) {
       const { interval, points } = RANGES[currentRange];
-      const all = await fetchCandles(slug, interval);
+      const all = await fetchCandles(slug, interval, currentRank);
       const sorted = points === Infinity ? all : all.slice(-points);
 
       const style = getComputedStyle(document.documentElement);
@@ -261,7 +281,14 @@
 
     async function setRange(range, btn) {
       currentRange = range;
-      document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+      btn.closest('.range-bar').querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (currentSlug) await renderChart(currentSlug);
+    }
+
+    async function setRank(rank, btn) {
+      currentRank = rank;
+      document.getElementById('rank-bar').querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       if (currentSlug) await renderChart(currentSlug);
     }

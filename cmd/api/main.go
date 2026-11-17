@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -26,6 +27,7 @@ func main() {
 	mux.HandleFunc("GET /health", handleHealth)
 	mux.HandleFunc("GET /items", handleItems(database))
 	mux.HandleFunc("GET /items/{slug}/candles", handleCandles(database))
+	mux.HandleFunc("GET /items/{slug}/ranks", handleRanks(database))
 	mux.HandleFunc("GET /movers", handleMovers(database))
 	mux.Handle("/", http.FileServer(http.Dir("/web")))
 
@@ -62,13 +64,30 @@ func handleCandles(d *db.DB) http.HandlerFunc {
 		if interval == "" {
 			interval = "1h"
 		}
-		candles, err := d.ItemCandles(slug, interval)
+		rank := 0
+		if v := r.URL.Query().Get("rank"); v != "" {
+			fmt.Sscanf(v, "%d", &rank)
+		}
+		candles, err := d.ItemCandles(slug, interval, rank)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError)
 			slog.Error("candles", "slug", slug, "err", err)
 			return
 		}
 		writeJSON(w, candles)
+	})
+}
+
+func handleRanks(d *db.DB) http.HandlerFunc {
+	return cached(15*time.Minute, func(w http.ResponseWriter, r *http.Request) {
+		slug := r.PathValue("slug")
+		ranks, err := d.ItemRanks(slug)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError)
+			slog.Error("ranks", "slug", slug, "err", err)
+			return
+		}
+		writeJSON(w, ranks)
 	})
 }
 

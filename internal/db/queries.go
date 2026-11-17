@@ -18,9 +18,9 @@ func (d *DB) UpsertItem(item model.Item) error {
 func (d *DB) InsertSnapshot(s model.Snapshot) error {
 	_, err := d.Exec(`
 		INSERT INTO price_snapshots
-			(item_slug, collected_at, sell_min, sell_median, buy_max, active_sell_orders, active_buy_orders)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-	`, s.ItemSlug, s.CollectedAt, s.SellMin, s.SellMedian, s.BuyMax, s.ActiveSellOrders, s.ActiveBuyOrders)
+			(item_slug, collected_at, rank, sell_min, sell_median, buy_max, active_sell_orders, active_buy_orders)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+	`, s.ItemSlug, s.CollectedAt, s.Rank, s.SellMin, s.SellMedian, s.BuyMax, s.ActiveSellOrders, s.ActiveBuyOrders)
 	return err
 }
 
@@ -62,20 +62,20 @@ func (d *DB) MovingAvgSellMedian(slug string, windowDays int) (float64, error) {
 func (d *DB) LatestSnapshot(slug string) (model.Snapshot, error) {
 	var s model.Snapshot
 	err := d.QueryRow(`
-		SELECT item_slug, collected_at, sell_min, sell_median, buy_max, active_sell_orders, active_buy_orders
+		SELECT item_slug, collected_at, rank, sell_min, sell_median, buy_max, active_sell_orders, active_buy_orders
 		FROM price_snapshots WHERE item_slug = $1
 		ORDER BY collected_at DESC LIMIT 1
-	`, slug).Scan(&s.ItemSlug, &s.CollectedAt, &s.SellMin, &s.SellMedian, &s.BuyMax, &s.ActiveSellOrders, &s.ActiveBuyOrders)
+	`, slug).Scan(&s.ItemSlug, &s.CollectedAt, &s.Rank, &s.SellMin, &s.SellMedian, &s.BuyMax, &s.ActiveSellOrders, &s.ActiveBuyOrders)
 	return s, err
 }
 
 func (d *DB) SnapshotAt(slug string, t time.Time) (model.Snapshot, error) {
 	var s model.Snapshot
 	err := d.QueryRow(`
-		SELECT item_slug, collected_at, sell_min, sell_median, buy_max, active_sell_orders, active_buy_orders
+		SELECT item_slug, collected_at, rank, sell_min, sell_median, buy_max, active_sell_orders, active_buy_orders
 		FROM price_snapshots WHERE item_slug = $1 AND collected_at <= $2
 		ORDER BY collected_at DESC LIMIT 1
-	`, slug, t).Scan(&s.ItemSlug, &s.CollectedAt, &s.SellMin, &s.SellMedian, &s.BuyMax, &s.ActiveSellOrders, &s.ActiveBuyOrders)
+	`, slug, t).Scan(&s.ItemSlug, &s.CollectedAt, &s.Rank, &s.SellMin, &s.SellMedian, &s.BuyMax, &s.ActiveSellOrders, &s.ActiveBuyOrders)
 	return s, err
 }
 

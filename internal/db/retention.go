@@ -18,10 +18,11 @@ func (d *DB) RunRetention() error {
 func (d *DB) aggregateHourly() error {
 	_, err := d.Exec(`
 		INSERT INTO price_snapshots_hourly
-			(item_slug, hour, sell_min, sell_median, buy_max, avg_sell_orders, avg_buy_orders, sample_count)
+			(item_slug, hour, rank, sell_min, sell_median, buy_max, avg_sell_orders, avg_buy_orders, sample_count)
 		SELECT
 			item_slug,
 			date_trunc('hour', collected_at) AS hour,
+			rank,
 			MIN(sell_min),
 			PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY sell_median)::INT,
 			MAX(buy_max),
@@ -31,8 +32,8 @@ func (d *DB) aggregateHourly() error {
 		FROM price_snapshots
 		WHERE collected_at < date_trunc('hour', NOW())
 		  AND collected_at >= NOW() - INTERVAL '32 days'
-		GROUP BY item_slug, date_trunc('hour', collected_at)
-		ON CONFLICT (item_slug, hour) DO NOTHING
+		GROUP BY item_slug, date_trunc('hour', collected_at), rank
+		ON CONFLICT (item_slug, hour, rank) DO NOTHING
 	`)
 	return err
 }
@@ -40,10 +41,11 @@ func (d *DB) aggregateHourly() error {
 func (d *DB) aggregateDaily() error {
 	_, err := d.Exec(`
 		INSERT INTO price_snapshots_daily
-			(item_slug, day, sell_min, sell_median, buy_max, avg_sell_orders, avg_buy_orders, sample_count)
+			(item_slug, day, rank, sell_min, sell_median, buy_max, avg_sell_orders, avg_buy_orders, sample_count)
 		SELECT
 			item_slug,
 			date_trunc('day', hour)::DATE AS day,
+			rank,
 			MIN(sell_min),
 			PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY sell_median)::INT,
 			MAX(buy_max),
@@ -52,8 +54,8 @@ func (d *DB) aggregateDaily() error {
 			SUM(sample_count)
 		FROM price_snapshots_hourly
 		WHERE hour < date_trunc('day', NOW())
-		GROUP BY item_slug, date_trunc('day', hour)::DATE
-		ON CONFLICT (item_slug, day) DO NOTHING
+		GROUP BY item_slug, date_trunc('day', hour)::DATE, rank
+		ON CONFLICT (item_slug, day, rank) DO NOTHING
 	`)
 	return err
 }
