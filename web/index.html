@@ -29,6 +29,10 @@
     #chart-view.active { display: block; }
     #list-view.hidden { display: none; }
     #chart-container { height: 400px; margin-top: 1rem; }
+    .range-bar { display: flex; gap: 0.25rem; margin-top: 1rem; }
+    .range-btn { background: none; border: 1px solid #3a3028; color: #7a6e63; padding: 0.25rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+    .range-btn:hover { color: #f0e6d3; border-color: #5a4e43; }
+    .range-btn.active { color: #f0e6d3; border-color: #9a8e83; background: #2e2820; }
     .back { background: none; border: 1px solid #3a3028; color: #9a8e83; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.875rem; }
     .back:hover { color: #f0e6d3; border-color: #5a4e43; }
     h2 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: #f0e6d3; }
@@ -62,6 +66,13 @@
     <div id="chart-view">
       <button class="back" onclick="showList()">← Back</button>
       <h2 id="chart-title" style="margin-top:1rem"></h2>
+      <div class="range-bar">
+        <button class="range-btn active" onclick="setRange('1D', this)">1D</button>
+        <button class="range-btn" onclick="setRange('5D', this)">5D</button>
+        <button class="range-btn" onclick="setRange('1M', this)">1M</button>
+        <button class="range-btn" onclick="setRange('6M', this)">6M</button>
+        <button class="range-btn" onclick="setRange('ALL', this)">All</button>
+      </div>
       <div id="chart-container"></div>
     </div>
     <p class="disclaimer">Data sourced from warframe.market · Refreshed every 45 min · Project not affiliated with Digital Extremes</p>
@@ -69,6 +80,9 @@
 
   <script>
     let allItems = [];
+    let currentSlug = null;
+    let candleCache = {};  // { slug: { '1h': [...], '1d': [...] } }
+    let currentRange = '1D';
 
     async function loadItems() {
       const res = await fetch('/items');
@@ -102,10 +116,39 @@
     function pctClass(v) { return v > 0 ? 'up' : v < 0 ? 'down' : ''; }
     function fmtPct(v) { if (v == null) return '—'; return (v > 0 ? '+' : '') + v.toFixed(1) + '%'; }
 
+    // range → { interval, points }
+    const RANGES = {
+      '1D':  { interval: '1h', points: 24 },
+      '5D':  { interval: '1h', points: 120 },
+      '1M':  { interval: '1h', points: 720 },
+      '6M':  { interval: '1d', points: 180 },
+      'ALL': { interval: '1d', points: Infinity },
+    };
+
+    async function fetchCandles(slug, interval) {
+      if (!candleCache[slug]) candleCache[slug] = {};
+      if (!candleCache[slug][interval]) {
+        const res = await fetch(`/items/${slug}/candles?interval=${interval}`);
+        const data = await res.json();
+        candleCache[slug][interval] = (data || []).slice().reverse();
+      }
+      return candleCache[slug][interval];
+    }
+
     async function showChart(slug, name) {
+      currentSlug = slug;
+      currentRange = '1D';
+      document.querySelectorAll('.range-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
       document.getElementById('list-view').classList.add('hidden');
       document.getElementById('chart-view').classList.add('active');
       document.getElementById('chart-title').textContent = name;
+      await renderChart(slug);
+    }
+
+    async function renderChart(slug) {
+      const { interval, points } = RANGES[currentRange];
+      const all = await fetchCandles(slug, interval);
+      const sorted = points === Infinity ? all : all.slice(-points);
 
       const container = document.getElementById('chart-container');
       container.innerHTML = '';
@@ -121,16 +164,19 @@
       const buySeries  = chart.addLineSeries({ color: '#5c6bc0', lineWidth: 2, title: 'Buy max' });
       const minSeries  = chart.addLineSeries({ color: '#ef5350', lineWidth: 1, title: 'Sell min' });
 
-      const res = await fetch(`/items/${slug}/candles?interval=1h`);
-      const candles = await res.json();
-      const sorted = (candles || []).slice().reverse();
-
       const toTs = c => Math.floor(new Date(c.time).getTime() / 1000);
       sellSeries.setData(sorted.map(c => ({ time: toTs(c), value: c.sell_median })));
       buySeries.setData(sorted.map(c => ({ time: toTs(c), value: c.buy_max })));
       minSeries.setData(sorted.map(c => ({ time: toTs(c), value: c.sell_min })));
 
       chart.timeScale().fitContent();
+    }
+
+    async function setRange(range, btn) {
+      currentRange = range;
+      document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (currentSlug) await renderChart(currentSlug);
     }
 
     function showList() {
