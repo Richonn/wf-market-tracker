@@ -9,7 +9,7 @@ import (
 func orders(entries ...model.Order) []model.Order { return entries }
 
 func order(typ, status string, plat int) model.Order {
-	return model.Order{OrderType: typ, UserStatus: status, Platinum: plat}
+	return model.Order{Type: typ, User: model.OrderUser{Status: status}, Platinum: plat}
 }
 
 func TestComputeSnapshot_basic(t *testing.T) {
