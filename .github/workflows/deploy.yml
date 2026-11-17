@@ -29,7 +29,7 @@ jobs:
           tar -czf - \
             --exclude='.git' \
             --exclude='.env' \
-            --exclude='./postgres/init' \
+            --exclude='./postgres' \
             . | ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 \
             ${{ secrets.NAS_USER }}@${{ secrets.NAS_HOST }} \
             "cd ${{ secrets.NAS_DEPLOY_PATH }} && tar -xzf -"
