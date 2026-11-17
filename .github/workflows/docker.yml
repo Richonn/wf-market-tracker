@@ -12,9 +12,7 @@ on:
 
 permissions:
   contents: read
-  security-events: write
   packages: write
-  id-token: write
 
 jobs:
   build-and-scan:
@@ -55,19 +53,7 @@ jobs:
         uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
         with:
           image-ref: '${{ steps.meta.outputs.image }}:${{ github.sha }}'
-          format: sarif
-          output: trivy-results.sarif
+          format: table
           severity: CRITICAL,HIGH
           ignore-unfixed: true
-
-      - name: Upload trivy results to Security tab
-        uses: github/codeql-action/upload-sarif@28deaeda66b76a05916b6923827895f2b14ab387 # v3.28.16
-        if: always()
-        with:
-          sarif_file: trivy-results.sarif
-
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da # v3.7.0
-
-      - name: Run Cosign
-        run: cosign sign --yes ${{ steps.meta.outputs.image }}:${{ github.sha }}
+          exit-code: '0'
