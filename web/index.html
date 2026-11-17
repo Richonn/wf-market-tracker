@@ -7,36 +7,57 @@
   <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, sans-serif; background: #1a1512; color: #e8e0d5; }
-    header { padding: 1rem 2rem; border-bottom: 1px solid #2e2820; display: flex; align-items: center; gap: 1rem; background: #211c17; }
-    header h1 { font-size: 1.1rem; font-weight: 600; color: #f0e6d3; }
-    header small { color: #7a6e63; font-size: 0.75rem; }
-    nav { display: flex; gap: 1rem; margin-left: auto; }
-    nav a { color: #9a8e83; text-decoration: none; font-size: 0.9rem; }
-    nav a.active, nav a:hover { color: #f0e6d3; }
+
+    /* dark theme (default) */
+    :root {
+      --bg: #1a1512; --bg2: #211c17; --border: #2e2820; --border2: #221e1a;
+      --text: #e8e0d5; --text2: #f0e6d3; --muted: #7a6e63; --muted2: #9a8e83;
+      --hover-bg: #1f1a15; --input-bg: #221e1a; --input-border: #3a3028;
+      --btn-active-bg: #2e2820; --disclaimer: #5a4e43;
+      --chart-bg: #1a1512; --chart-text: #9a8e83; --chart-grid: #2e2820;
+    }
+    :root.light {
+      --bg: #f5f0eb; --bg2: #ede6dd; --border: #d4c8bc; --border2: #e0d8cf;
+      --text: #2d2520; --text2: #1a1210; --muted: #7a6e63; --muted2: #5a4e43;
+      --hover-bg: #ede6dd; --input-bg: #fff; --input-border: #c4b8ac;
+      --btn-active-bg: #d4c8bc; --disclaimer: #9a8e83;
+      --chart-bg: #f5f0eb; --chart-text: #5a4e43; --chart-grid: #d4c8bc;
+    }
+
+    body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); transition: background 0.2s, color 0.2s; }
+    header { padding: 1rem 2rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 1rem; background: var(--bg2); }
+    header h1 { font-size: 1.1rem; font-weight: 600; color: var(--text2); }
+    header small { color: var(--muted); font-size: 0.75rem; }
+    nav { display: flex; gap: 1rem; margin-left: auto; align-items: center; }
+    nav a { color: var(--muted2); text-decoration: none; font-size: 0.9rem; }
+    nav a.active, nav a:hover { color: var(--text2); }
     main { padding: 1.5rem 2rem; }
     table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-    th { text-align: left; padding: 0.5rem 0.75rem; color: #7a6e63; font-weight: 500; border-bottom: 1px solid #2e2820; }
-    td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #221e1a; }
-    tr:hover td { background: #1f1a15; }
-    td a { color: #e8e0d5; text-decoration: none; }
-    td a:hover { color: #f0e6d3; }
+    th { text-align: left; padding: 0.5rem 0.75rem; color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--border); }
+    td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border2); }
+    tr:hover td { background: var(--hover-bg); }
+    td a { color: var(--text); text-decoration: none; }
+    td a:hover { color: var(--text2); }
     .up { color: #4caf7d; }
     .down { color: #e06c5a; }
-    .search { padding: 0.5rem 0.75rem; background: #221e1a; border: 1px solid #3a3028; color: #e8e0d5; border-radius: 4px; width: 220px; font-size: 0.875rem; }
-    .search:focus { outline: none; border-color: #5a4e43; }
+    .search { padding: 0.5rem 0.75rem; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text); border-radius: 4px; width: 220px; font-size: 0.875rem; }
+    .search:focus { outline: none; border-color: var(--muted2); }
     #chart-view { display: none; }
     #chart-view.active { display: block; }
     #list-view.hidden { display: none; }
     #chart-container { height: 400px; margin-top: 1rem; }
     .range-bar { display: flex; gap: 0.25rem; margin-top: 1rem; }
-    .range-btn { background: none; border: 1px solid #3a3028; color: #7a6e63; padding: 0.25rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
-    .range-btn:hover { color: #f0e6d3; border-color: #5a4e43; }
-    .range-btn.active { color: #f0e6d3; border-color: #9a8e83; background: #2e2820; }
-    .back { background: none; border: 1px solid #3a3028; color: #9a8e83; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.875rem; }
-    .back:hover { color: #f0e6d3; border-color: #5a4e43; }
-    h2 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: #f0e6d3; }
-    .disclaimer { color: #5a4e43; font-size: 0.75rem; margin-top: 2rem; }
+    .range-btn { background: none; border: 1px solid var(--input-border); color: var(--muted); padding: 0.25rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+    .range-btn:hover { color: var(--text2); border-color: var(--muted2); }
+    .range-btn.active { color: var(--text2); border-color: var(--muted2); background: var(--btn-active-bg); }
+    .back { background: none; border: 1px solid var(--input-border); color: var(--muted2); padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.875rem; }
+    .back:hover { color: var(--text2); border-color: var(--muted2); }
+    .market-link { font-size: 0.85rem; color: var(--muted2); text-decoration: none; border: 1px solid var(--input-border); padding: 0.4rem 0.8rem; border-radius: 4px; }
+    .market-link:hover { color: var(--text2); border-color: var(--muted2); }
+    h2 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--text2); }
+    .disclaimer { color: var(--disclaimer); font-size: 0.75rem; margin-top: 2rem; }
+    .theme-btn { background: none; border: 1px solid var(--input-border); color: var(--muted2); padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+    .theme-btn:hover { color: var(--text2); border-color: var(--muted2); }
   </style>
 </head>
 <body>
@@ -46,6 +67,7 @@
     <nav>
       <a href="#" class="active" id="nav-list" onclick="showList()">All items</a>
       <a href="#" id="nav-movers" onclick="showMovers()">Top movers</a>
+      <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀ Light</button>
     </nav>
   </header>
   <main>
@@ -66,7 +88,7 @@
     <div id="chart-view">
       <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem">
         <button class="back" onclick="showList()">← Back</button>
-        <a id="market-link" href="#" target="_blank" rel="noopener" style="font-size:0.85rem; color:#9a8e83; text-decoration:none; border:1px solid #3a3028; padding:0.4rem 0.8rem; border-radius:4px;">Buy on market ↗</a>
+        <a id="market-link" class="market-link" href="#" target="_blank" rel="noopener">Buy on market ↗</a>
       </div>
       <h2 id="chart-title"></h2>
       <div class="range-bar">
@@ -84,8 +106,20 @@
   <script>
     let allItems = [];
     let currentSlug = null;
-    let candleCache = {};  // { slug: { '1h': [...], '1d': [...] } }
+    let candleCache = {};
     let currentRange = '1D';
+    let isDark = true;
+
+    function toggleTheme() {
+      isDark = !isDark;
+      document.documentElement.classList.toggle('light', !isDark);
+      document.getElementById('theme-btn').textContent = isDark ? '☀ Light' : '☾ Dark';
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      if (currentSlug) renderChart(currentSlug);
+    }
+
+    // restore saved theme
+    if (localStorage.getItem('theme') === 'light') toggleTheme();
 
     async function loadItems() {
       const res = await fetch('/items');
@@ -119,7 +153,6 @@
     function pctClass(v) { return v > 0 ? 'up' : v < 0 ? 'down' : ''; }
     function fmtPct(v) { if (v == null) return '—'; return (v > 0 ? '+' : '') + v.toFixed(1) + '%'; }
 
-    // range → { interval, points }
     const RANGES = {
       '1D':  { interval: '1h', points: 24 },
       '5D':  { interval: '1h', points: 120 },
@@ -157,9 +190,13 @@
       const container = document.getElementById('chart-container');
       container.innerHTML = '';
 
+      const bg   = getComputedStyle(document.documentElement).getPropertyValue('--chart-bg').trim();
+      const text = getComputedStyle(document.documentElement).getPropertyValue('--chart-text').trim();
+      const grid = getComputedStyle(document.documentElement).getPropertyValue('--chart-grid').trim();
+
       const chart = LightweightCharts.createChart(container, {
-        layout: { background: { color: '#1a1512' }, textColor: '#9a8e83' },
-        grid: { vertLines: { color: '#2e2820' }, horzLines: { color: '#2e2820' } },
+        layout: { background: { color: bg }, textColor: text },
+        grid: { vertLines: { color: grid }, horzLines: { color: grid } },
         width: container.clientWidth,
         height: 400,
       });
