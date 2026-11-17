@@ -160,11 +160,12 @@ type cacheEntry struct {
 
 func cached(ttl time.Duration, h http.HandlerFunc) http.HandlerFunc {
 	var mu sync.Mutex
-	var entry *cacheEntry
+	entries := map[string]*cacheEntry{}
 	return func(w http.ResponseWriter, r *http.Request) {
 		key := r.URL.String()
 		mu.Lock()
-		if entry != nil && entry.expiresAt.After(time.Now()) && r.URL.String() == key {
+		entry := entries[key]
+		if entry != nil && entry.expiresAt.After(time.Now()) {
 			body := entry.body
 			mu.Unlock()
 			w.Header().Set("Content-Type", "application/json")
@@ -177,7 +178,7 @@ func cached(ttl time.Duration, h http.HandlerFunc) http.HandlerFunc {
 		h(rec, r)
 
 		mu.Lock()
-		entry = &cacheEntry{body: rec.body, expiresAt: time.Now().Add(ttl)}
+		entries[key] = &cacheEntry{body: rec.body, expiresAt: time.Now().Add(ttl)}
 		mu.Unlock()
 
 		for k, v := range rec.header {
