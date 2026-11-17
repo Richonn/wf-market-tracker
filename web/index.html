@@ -125,9 +125,10 @@
       const candles = await res.json();
       const sorted = (candles || []).slice().reverse();
 
-      sellSeries.setData(sorted.map(c => ({ time: c.time.slice(0, 10) + 'T' + c.time.slice(11, 19), value: c.sell_median })));
-      buySeries.setData(sorted.map(c => ({ time: c.time.slice(0, 10) + 'T' + c.time.slice(11, 19), value: c.buy_max })));
-      minSeries.setData(sorted.map(c => ({ time: c.time.slice(0, 10) + 'T' + c.time.slice(11, 19), value: c.sell_min })));
+      const toTs = c => Math.floor(new Date(c.time).getTime() / 1000);
+      sellSeries.setData(sorted.map(c => ({ time: toTs(c), value: c.sell_median })));
+      buySeries.setData(sorted.map(c => ({ time: toTs(c), value: c.buy_max })));
+      minSeries.setData(sorted.map(c => ({ time: toTs(c), value: c.sell_min })));
 
       chart.timeScale().fitContent();
     }
